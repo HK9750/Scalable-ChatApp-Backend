@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_1 = require("socket.io");
 const ioredis_1 = __importDefault(require("ioredis"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const kafka_1 = require("./kafka");
 dotenv_1.default.config();
 const pub = new ioredis_1.default({
     host: process.env.REDIS_HOST,
@@ -55,12 +56,14 @@ class SocketService {
                 yield pub.publish("chat", message);
             }));
         });
-        sub.on("message", (channel, message) => {
+        sub.on("message", (channel, message) => __awaiter(this, void 0, void 0, function* () {
             if (channel === "chat") {
                 console.log("Message received from Redis: ", message);
                 io.emit("message", message);
+                yield (0, kafka_1.createMessage)(message);
+                console.log("Message sent to Kafka broker");
             }
-        });
+        }));
     }
 }
 exports.default = SocketService;

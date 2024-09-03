@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
 import dotenv from "dotenv";
+import { createMessage } from "./kafka";
 dotenv.config();
 
 const pub = new Redis({
@@ -52,10 +53,12 @@ class SocketService {
       });
     });
 
-    sub.on("message", (channel, message) => {
+    sub.on("message", async (channel, message) => {
       if (channel === "chat") {
         console.log("Message received from Redis: ", message);
         io.emit("message", message);
+        await createMessage(message);
+        console.log("Message sent to Kafka broker");
       }
     });
   }
